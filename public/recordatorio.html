@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publicbs - Recordatorios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        p {
+            color: #000;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        nav {
+            background-color: #007BFF;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        nav ul {
+            display: flex;
+            justify-content: flex-start;
+            margin: 0;
+            padding: 0;
+        }
+        nav li {
+            list-style: none;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+        nav a {
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        #createRecordatorioForm, #editRecordatorioForm {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        #createRecordatorioForm input, #editRecordatorioForm input,
+        #createRecordatorioForm textarea, #editRecordatorioForm textarea,
+        #createRecordatorioForm select, #editRecordatorioForm select {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .create-button, .edit-button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .create-button:hover, .edit-button:hover {
+            background-color: #218838;
+        }
+        .delete-button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .urgente {
+            border-left: 5px solid #dc3545;
+        }
+        .importante {
+            border-left: 5px solid #ffc107;
+        }
+        .normal {
+            border-left: 5px solid #17a2b8;
+        }
+    </style>
+    <script>
+        const token = localStorage.getItem('token');
+       
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('createRecordatorioDiv').style.display = 'none';
+            document.getElementById('editRecordatorioDiv').style.display = 'none';
+            fetchRecordatorios();
+            fetchUsers();
+        });
+
+        function fetchRecordatorios() {
+            fetch('/recordatorios', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Consulta de los recordatorios", data);
+                const recordatoriosList = document.getElementById('recordatoriosList');
+                recordatoriosList.innerHTML = '';
+                if (data.length === 0) {
+                    document.getElementById('noRecordatorios').style.display = 'block';
+                } else {
+                    document.getElementById('noRecordatorios').style.display = 'none';
+                    data.forEach(recordatorio => {
+                        const recordatorioElement = document.createElement('li');
+                        // Agregar clase según prioridad
+                        recordatorioElement.classList.add(recordatorio.prioridad.toLowerCase());
+                        
+                        // Formatear fecha
+                        const fecha = new Date(recordatorio.fecha);
+                        const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        recordatorioElement.innerHTML = `
+                            <h2>${recordatorio.titulo}</h2>
+                            <p><strong>Descripción:</strong> ${recordatorio.descripcion}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                            <p><strong>Prioridad:</strong> ${recordatorio.prioridad}</p>
+                            <p><strong>Usuario:</strong> ${recordatorio.idUser.name} ${recordatorio.idUser.lastName}</p>
+                            <button onclick="showEditRecordatorioForm('${recordatorio._id}')" class="edit-button">Modificar</button>
+                            <button onclick="deleteRecordatorio('${recordatorio._id}')" class="delete-button">Eliminar</button>
+                        `;
+                        recordatoriosList.appendChild(recordatorioElement);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching recordatorios:', error));
+        }
+
+        function fetchUsers() {
+            fetch('/users', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                const userSelect = document.getElementById('recordatorioUser');
+                const editUserSelect = document.getElementById('editRecordatorioUser');
+                userSelect.innerHTML = '<option value="">Seleccione un usuario</option>';
+                editUserSelect.innerHTML = '<option value="">Seleccione un usuario</option>';
+                data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user._id;
+                    option.textContent = `${user.name} ${user.lastName}`;
+                    userSelect.appendChild(option);
+                    editUserSelect.appendChild(option.cloneNode(true));
+                });
+            })
+            .catch(error => console.error('Error fetching users:', error));
+        }
+
+        function showCreateRecordatorioForm() {
+            document.getElementById('createRecordatorioDiv').style.display = 'block';
+            document.getElementById('editRecordatorioDiv').style.display = 'none';
+        }
+
+        function createRecordatorio(event) {
+            event.preventDefault();
+            const titulo = document.getElementById('recordatorioTitulo').value;
+            const descripcion = document.getElementById('recordatorioDescripcion').value;
+            const fecha = document.getElementById('recordatorioFecha').value;
+            const prioridad = document.getElementById('recordatorioPrioridad').value;
+            const idUser = document.getElementById('recordatorioUser').value;
+
+            const recordatorio = {
+                titulo,
+                descripcion,
+                fecha: new Date(fecha).toISOString(),
+                prioridad,
+                idUser
+            };
+
+            fetch('/recordatorios', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+                body: JSON.stringify(recordatorio)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recordatorio creado:', data);
+                showModal('Recordatorio registrado exitosamente');
+                document.getElementById('createRecordatorioForm').reset();
+                document.getElementById('createRecordatorioDiv').style.display = 'none';
+                fetchRecordatorios();
+            })
+            .catch(error => {
+                console.error('Error creating recordatorio:', error);
+                showModal('Error al crear el recordatorio');
+            });
+        }
+
+        function showEditRecordatorioForm(recordatorioId) {
+            fetch(`/recordatorios/${recordatorioId}`, {
+                headers: {
+                    'Authorization': `${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(recordatorio => {
+                const recordatorioEdit = recordatorio.recordatorio;
+                
+                // Formatear fecha para el input datetime-local
+                const fecha = new Date(recordatorioEdit.fecha);
+                const fechaFormateada = fecha.toISOString().slice(0, 16);
+                
+                document.getElementById('editRecordatorioId').value = recordatorioEdit._id;
+                document.getElementById('editRecordatorioTitulo').value = recordatorioEdit.titulo;
+                document.getElementById('editRecordatorioDescripcion').value = recordatorioEdit.descripcion;
+                document.getElementById('editRecordatorioFecha').value = fechaFormateada;
+                document.getElementById('editRecordatorioPrioridad').value = recordatorioEdit.prioridad;
+                document.getElementById('editRecordatorioUser').value = recordatorioEdit.idUser._id;
+                document.getElementById('createRecordatorioDiv').style.display = 'none';
+                document.getElementById('editRecordatorioDiv').style.display = 'block';
+            })
+            .catch(error => console.error('Error fetching recordatorio:', error));
+        }
+
+        function editRecordatorio(event) {
+            event.preventDefault();
+            const recordatorioId = document.getElementById('editRecordatorioId').value;
+            const titulo = document.getElementById('editRecordatorioTitulo').value;
+            const descripcion = document.getElementById('editRecordatorioDescripcion').value;
+            const fecha = document.getElementById('editRecordatorioFecha').value;
+            const prioridad = document.getElementById('editRecordatorioPrioridad').value;
+            const idUser = document.getElementById('editRecordatorioUser').value;
+
+            const recordatorio = {
+                titulo,
+                descripcion,
+                fecha: new Date(fecha).toISOString(),
+                prioridad,
+                idUser
+            };
+
+            fetch(`/recordatorios/${recordatorioId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+                body: JSON.stringify(recordatorio)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recordatorio actualizado:', data);
+                showModal('Recordatorio modificado exitosamente');
+                document.getElementById('editRecordatorioForm').reset();
+                document.getElementById('editRecordatorioDiv').style.display = 'none';
+                fetchRecordatorios();
+            })
+            .catch(error => console.error('Error updating recordatorio:', error));
+        }
+
+        function deleteRecordatorio(recordatorioId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este recordatorio?')) {
+                fetch(`/recordatorios/${recordatorioId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Recordatorio eliminado:', data);
+                    showModal('Recordatorio eliminado exitosamente');
+                    fetchRecordatorios();
+                })
+                .catch(error => console.error('Error deleting recordatorio:', error));
+            }
+        }
+
+        function showRecordatoriosProximos() {
+            fetch('/recordatorios/proximos', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(recordatorios => {
+                console.log('Recordatorios próximos:', recordatorios);
+                const recordatoriosList = document.getElementById('recordatoriosList');
+                recordatoriosList.innerHTML = '';
+                
+                if (recordatorios.length === 0) {
+                    document.getElementById('noRecordatorios').style.display = 'block';
+                } else {
+                    document.getElementById('noRecordatorios').style.display = 'none';
+                    
+                    const title = document.createElement('h1');
+                    title.innerText = 'Recordatorios próximos (próximos 7 días)';
+                    recordatoriosList.appendChild(title);
+                    
+                    recordatorios.forEach(recordatorio => {
+                        const recordatorioElement = document.createElement('li');
+                        recordatorioElement.classList.add(recordatorio.prioridad.toLowerCase());
+                        
+                        const fecha = new Date(recordatorio.fecha);
+                        const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        recordatorioElement.innerHTML = `
+                            <h2>${recordatorio.titulo}</h2>
+                            <p><strong>Descripción:</strong> ${recordatorio.descripcion}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                            <p><strong>Prioridad:</strong> ${recordatorio.prioridad}</p>
+                            <p><strong>Usuario:</strong> ${recordatorio.idUser.name} ${recordatorio.idUser.lastName}</p>
+                        `;
+                        recordatoriosList.appendChild(recordatorioElement);
+                    });
+
+                    const volverButton = document.createElement('button');
+                    volverButton.classList.add('create-button');
+                    volverButton.style.marginTop = '5px';
+                    volverButton.style.marginBottom = '10px';
+                    volverButton.style.backgroundColor = '#007BFF';
+                    volverButton.style.color = '#fff';
+                    volverButton.style.border = 'none';
+                    volverButton.innerText = 'Ver todos los recordatorios';
+                    volverButton.addEventListener('click', () => {
+                        document.getElementById('noRecordatorios').style.display = 'none';
+                        fetchRecordatorios();
+                    });
+                    document.getElementById('recordatoriosList').appendChild(volverButton);
+                }
+            })
+            .catch(error => {
+                console.log('Error fetching recordatorios próximos:', error);
+                showModal('Error al obtener recordatorios próximos');
+            });
+        }
+
+        function showModal(message) {
+            const modal = document.createElement('div');
+            modal.id = 'modal';
+            modal.style.position = 'fixed';
+            modal.style.top = '50%';
+            modal.style.left = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+            modal.style.backgroundColor = '#fff';
+            modal.style.padding = '20px';
+            modal.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+            modal.style.zIndex = '1000';
+            modal.innerHTML = `
+                <p>${message}</p>
+                <button onclick="closeModal()">Cerrar</button>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+    </script>
+</head>
+<body>
+    <p>Hola! Bienvenido</p>
+    <nav>
+        <ul>
+            <li><a href="#" onclick="showCreateRecordatorioForm()">Crear Recordatorio</a></li>
+            <li><a href="#" onclick="showRecordatoriosProximos()">Ver Recordatorios Próximos</a></li>
+            <li><a href="/home">Home</a></li>
+        </ul>
+    </nav>
+    <div id="createRecordatorioDiv">
+        <h2>Crear Recordatorio</h2>
+        <form onsubmit="createRecordatorio(event)" id="createRecordatorioForm">
+            <input type="text" id="recordatorioTitulo" name="titulo" placeholder="Título del recordatorio" required>
+            <textarea id="recordatorioDescripcion" name="descripcion" placeholder="Descripción" required></textarea>
+            <input type="datetime-local" id="recordatorioFecha" name="fecha" required>
+            <select id="recordatorioPrioridad" required>
+                <option value="">Seleccione prioridad</option>
+                <option value="URGENTE">Urgente</option>
+                <option value="IMPORTANTE">Importante</option>
+                <option value="NORMAL">Normal</option>
+            </select>
+            <select id="recordatorioUser" required>
+                <option value="">Seleccione un usuario</option>
+            </select>
+            <button type="submit" class="create-button">Crear</button>
+        </form>
+    </div>
+    <div id="editRecordatorioDiv">
+        <h2>Modificar Recordatorio</h2>
+        <form onsubmit="editRecordatorio(event)" id="editRecordatorioForm">
+            <input type="hidden" id="editRecordatorioId">
+            <input type="text" id="editRecordatorioTitulo" name="titulo" placeholder="Título del recordatorio" required>
+            <textarea id="editRecordatorioDescripcion" name="descripcion" placeholder="Descripción" required></textarea>
+            <input type="datetime-local" id="editRecordatorioFecha" name="fecha" required>
+            <select id="editRecordatorioPrioridad" required>
+                <option value="">Seleccione prioridad</option>
+                <option value="URGENTE">Urgente</option>
+                <option value="IMPORTANTE">Importante</option>
+                <option value="NORMAL">Normal</option>
+            </select>
+            <select id="editRecordatorioUser" required>
+                <option value="">Seleccione un usuario</option>
+            </select>
+            <button type="submit" class="edit-button">Modificar</button>
+        </form>
+    </div>
+    <p id="welcomeMessage"></p>
+    <h2 id="recordatoriosTitle">Recordatorios</h2>
+    <ul id="recordatoriosList"></ul>
+    <p id="noRecordatorios" style="display: none;">No hay recordatorios registrados</p>
+</body>
+</html>
