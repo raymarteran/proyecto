@@ -5,10 +5,9 @@ class RecordatorioController {
     getRecordatorios(req, res) {
         return new Promise(async (resolve, reject) => {
             try {
-                // Obtener todos los recordatorios con los datos del usuario relacionado
                 const recordatorios = await RecordatorioModel.find()
                     .populate('idUser')
-                    .sort({ fecha: 1 }); // Ordenar por fecha ascendente
+                    .sort({ fecha: 1 }); 
                 
                 resolve(recordatorios);
             } catch (error) {
@@ -22,7 +21,6 @@ class RecordatorioController {
             try {
                 const newRecordatorio = body;
 
-                // Guardar el nuevo recordatorio
                 const recordatorio = new RecordatorioModel(newRecordatorio);
                 const recordatorioCreado = await recordatorio.save();
                 
@@ -93,7 +91,7 @@ class RecordatorioController {
                     }
                 })
                 .populate('idUser')
-                .sort({ fecha: 1 }); // Ordenar por fecha ascendente
+                .sort({ fecha: 1 });
                 
                 resolve(recordatorios);
             } catch (error) {
