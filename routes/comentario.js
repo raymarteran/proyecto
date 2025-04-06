@@ -4,7 +4,6 @@ const ComentarioController = require('../controllers/comentarioController.js');
 
 const comentarioController = new ComentarioController();
 
-// Obtener todos los comentarios de una actividad específica
 router.get('/actividad/:idActividad', (req, res, next) => {
     comentarioController.getComentariosByActividad(req.params.idActividad)
     .then((result) => {
@@ -15,7 +14,6 @@ router.get('/actividad/:idActividad', (req, res, next) => {
     });
 });
 
-// Crear un nuevo comentario
 router.post('/', (req, res, next) => {
     comentarioController.postComentario(req.body)
     .then((result) => {

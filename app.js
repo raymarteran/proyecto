@@ -38,7 +38,6 @@ app.use('/auth', authRoutes);
 
 const path = require('path');
 
-// Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 

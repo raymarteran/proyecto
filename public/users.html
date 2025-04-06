@@ -135,7 +135,27 @@
                 //alert("token no ingresado debe iniciar sesion, no tiene permisos para permanecer en esta pantalla")
                 showModal('Token no ingresado, debe iniciar sesión. No tiene permisos para permanecer en esta pantalla.', 'error');
             }
+            const idUserLogin = localStorage.getItem('idUserLog');
+            getDataUser(idUserLogin);
         });
+
+        function getDataUser(idUserLogin) {
+            fetch(`/users/${idUserLogin}`,{
+              method: 'GET',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `${token}`
+              },
+          })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("getData user login", data);
+                    userLogg = data.user;
+                    document.getElementById('holaBienvenido').innerHTML = `Hola ${userLogg.name} ${userLogg.lastName}! Bienvenido`;
+                    
+                })
+                .catch(error => console.error(error));
+        }
 
         function getToken() {
              return localStorage.getItem('token');
@@ -332,7 +352,7 @@
     </script>
 </head>
 <body>
-    <p>Hola! Bienvenido</p>
+    <p id="holaBienvenido">Hola! Bienvenido</p>
     <nav>
         <ul>
             <li><a href="#" onclick="showCreateUserForm()">Crear Usuario</a></li>

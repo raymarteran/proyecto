@@ -105,7 +105,29 @@
             fetchHabitos();
             fetchActivities();
             fetchUsers();
+            const idUserLogin = localStorage.getItem('idUserLog');
+            getDataUser(idUserLogin);
         });
+
+        function getDataUser(idUserLogin) {
+            fetch(`/users/${idUserLogin}`,{
+              method: 'GET',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `${token}`
+              },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("getData user login", data);
+                    userLogg = data.user;
+                    document.getElementById('holaBienvenido').innerHTML = `Hola ${userLogg.name} ${userLogg.lastName}! Bienvenido`;
+                    
+                })
+                .catch(error => console.error(error));
+        }
+
+        
 
         function fetchHabitos() {
             fetch('/habito', {
@@ -382,7 +404,7 @@
     </script>
 </head>
 <body>
-    <p>Hola! Bienvenido</p>
+    <p id="holaBienvenido">Hola! Bienvenido</p>
     <nav>
         <ul>
             <li><a href="#" onclick="showCreateHabitoForm()">Crear Hábito</a></li>

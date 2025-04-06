@@ -15,7 +15,7 @@ class ComentarioController {
 
                 const comentarios = await ComentarioModel.find({ idActividad })
                     .populate('idUser')
-                    .sort({ fecha: -1 }); // Ordenar los comentarios por fecha descendente
+                    .sort({ fecha: -1 }); // Ordenar los ente
                 
                 resolve(comentarios);
             } catch (error) {
