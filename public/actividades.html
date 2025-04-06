@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publicbs - Actividades</title>
     <style>
-        body {
+         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
@@ -96,6 +96,52 @@
         .delete-button:hover {
             background-color: #c82333;
         }
+        
+        
+        .comments-section {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .comment {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #e9ecef;
+            border-radius: 3px;
+        }
+        
+        .comment-form {
+            margin-top: 10px;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        
+        .comment-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .show-comments {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -109,18 +155,17 @@
 
         function fetchActivities() {
             fetch('/actividad', {
-              method: 'GET',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `${token}`
-              },
-          })
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+            })
             .then(response => response.json())
             .then(data => {
                 const activitiesList = document.getElementById('activitiesList');
                 activitiesList.innerHTML = '';
                 data.forEach(activity => {
-                    console.log("activity", activity)
                     const activityElement = document.createElement('li');
                     activityElement.classList.add('activity');
                     activityElement.innerHTML = `
@@ -129,11 +174,84 @@
                         <p>Usuario: ${activity.idUser.name} ${activity.idUser.lastName}</p>
                         <button onclick="showEditActivityForm('${activity._id}')" class="edit-button">Modificar</button>
                         <button onclick="deleteActivity('${activity._id}')" class="delete-button">Eliminar</button>
+                        <button onclick="toggleComments('${activity._id}')" class="show-comments">Mostrar Comentarios</button>
+                        <div id="comments-${activity._id}" class="comments-section" style="display:none;">
+                            <div id="comments-list-${activity._id}"></div>
+                            <form class="comment-form" onsubmit="addComment(event, '${activity._id}')">
+                                <textarea id="comment-text-${activity._id}" placeholder="Añade un comentario..." required></textarea>
+                                <button type="submit" class="comment-button">Comentar</button>
+                            </form>
+                        </div>
                     `;
                     activitiesList.appendChild(activityElement);
                 });
             })
             .catch(error => console.error('Error fetching activities:', error));
+        }
+
+        function toggleComments(activityId) {
+            const commentsSection = document.getElementById(`comments-${activityId}`);
+            const isHidden = commentsSection.style.display === 'none';
+            commentsSection.style.display = isHidden ? 'block' : 'none';
+            
+            if (isHidden) {
+                fetchComments(activityId);
+            }
+        }
+
+        function fetchComments(activityId) {
+            fetch(`/comentario/actividad/${activityId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+            })
+            .then(response => response.json())
+            .then(comments => {
+                const commentsList = document.getElementById(`comments-list-${activityId}`);
+                commentsList.innerHTML = '';
+                
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '<p>No hay comentarios aún</p>';
+                } else {
+                    comments.forEach(comment => {
+                        const commentElement = document.createElement('div');
+                        commentElement.classList.add('comment');
+                        commentElement.innerHTML = `
+                            <p><strong>${comment.idUser.name}:</strong> ${comment.texto}</p>
+                            <small>${new Date(comment.fecha).toLocaleString()}</small>
+                        `;
+                        commentsList.appendChild(commentElement);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching comments:', error));
+        }
+
+        function addComment(event, activityId) {
+            event.preventDefault();
+            const texto = document.getElementById(`comment-text-${activityId}`).value;
+            
+            fetch('/comentario', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+                body: JSON.stringify({
+                    texto,
+                    idActividad: activityId,
+                    idUser: localStorage.getItem('idUser')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showModal('Comentario añadido exitosamente');
+                document.getElementById(`comment-text-${activityId}`).value = '';
+                fetchComments(activityId);
+            })
+            .catch(error => console.error('Error adding comment:', error));
         }
 
         function fetchCategories() {
@@ -304,6 +422,7 @@
                 document.body.removeChild(modal);
             }
         }
+        
     </script>
 </head>
 <body>

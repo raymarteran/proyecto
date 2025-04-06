@@ -23,6 +23,7 @@ const proyecto = require('./routes/proyecto.js');
 const actividadRealizada = require('./routes/actividadRealizada.js');
 const authRoutes = require('./routes/auth.js');
 const recordatoriosRoutes = require('./routes/recordatorios.js');
+const comentariosRoutes = require('./routes/comentario.js');
 
 
 app.use('/users', verifyToken, routesUsers);
@@ -32,6 +33,7 @@ app.use('/habito', verifyToken, habito);
 app.use('/proyecto', verifyToken, proyecto);
 app.use('/actividadRealizada', verifyToken, actividadRealizada);
 app.use('/recordatorios', verifyToken, recordatoriosRoutes);
+app.use('/comentario', verifyToken, comentariosRoutes);
 app.use('/auth', authRoutes);
 
 const path = require('path');
