@@ -43,12 +43,10 @@ app.set('views', path.join(__dirname, 'views'));
 
 
 app.get('/', (req, res) => {
-    console.log("Entra en index")
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
 app.get('/home', (req, res) => {
-    console.log("Entra en home")
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
