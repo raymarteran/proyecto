@@ -26,7 +26,6 @@ router.get('/proximos', (req, res, next) => {
     });
 });
 
-// Crear un nuevo recordatorio
 router.post('/', (req, res, next) => {
     recordatorioController.postRecordatorio(req.body)
     .then((result) => {
@@ -37,7 +36,6 @@ router.post('/', (req, res, next) => {
     });
 });
 
-// Eliminar un recordatorio
 router.delete('/:id', (req, res, next) => {
     recordatorioController.deleteRecordatorio(req.params.id)
     .then((result) => {
