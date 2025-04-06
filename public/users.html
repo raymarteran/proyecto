@@ -125,6 +125,25 @@
         .delete-button:hover {
             background-color: #c82333;
         }
+        .divCerrarSesion {
+            width: 98%;
+            display: flex;
+            align-items: end;
+            justify-content: end;
+            text-align: end;
+            padding: 1.5rem;
+        }
+        .cerrar-sesion-button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
     </style>
     <script>
         const token = localStorage.getItem('token');
@@ -349,10 +368,17 @@
                 document.body.removeChild(modal);
             }
         }
+        function cerrarSesion () {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
     </script>
 </head>
 <body>
     <p id="holaBienvenido">Hola! Bienvenido</p>
+    <div class="divCerrarSesion">
+        <button type="button" class="cerrar-sesion-button" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
     <nav>
         <ul>
             <li><a href="#" onclick="showCreateUserForm()">Crear Usuario</a></li>
