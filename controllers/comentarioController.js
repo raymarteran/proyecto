@@ -7,17 +7,15 @@ class ComentarioController {
     getComentariosByActividad(idActividad) {
         return new Promise(async (resolve, reject) => {
             try {
-                // Verificar que la actividad existe
                 const actividad = await ActividadModel.findById(idActividad);
                 if (!actividad) {
                     resolve({ status: 404, message: 'Actividad no encontrada' });
                     return;
                 }
 
-                // Obtener comentarios con datos de usuario
                 const comentarios = await ComentarioModel.find({ idActividad })
                     .populate('idUser')
-                    .sort({ fecha: -1 }); // Ordenar por fecha descendente
+                    .sort({ fecha: -1 }); // Ordenar los comentarios por fecha descendente
                 
                 resolve(comentarios);
             } catch (error) {
@@ -34,14 +32,10 @@ class ComentarioController {
             try {
                 const { texto, idActividad, idUser } = body;
 
-                // Validaciones básicas
                 if (!texto || !idActividad || !idUser) {
                     resolve({ status: 400, message: 'Faltan campos requeridos' });
                     return;
                 }
-                console.log("idActividad:", idActividad);
-                console.log("idUser:", idUser);
-                // Verificar que la actividad y el usuario existen
                 const [actividad, user] = await Promise.all([
                     ActividadModel.findById(idActividad),
                     UserModel.findById(idUser)
@@ -56,7 +50,6 @@ class ComentarioController {
                     return;
                 }
 
-                // Crear nuevo comentario
                 const nuevoComentario = new ComentarioModel({
                     texto,
                     idActividad,
